@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Scout — Jani's Weekly Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --accent3: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --tag-bg: #1e1e30;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .logo-block h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-block p {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+
+  .stat {
+    text-align: right;
+  }
+
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  select, input[type="text"] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    padding: 8px 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  select:focus, input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+
+  input[type="text"] {
+    min-width: 200px;
+    flex: 1;
+  }
+
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+    font-weight: 500;
+  }
+
+  .btn-primary:hover { background: #00b8d9; transform: translateY(-1px); }
+
+  .btn-danger {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+  }
+
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Category pills */
+  .category-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .pill:hover, .pill.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+  }
+
+  /* Items */
+  .items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .item-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 20px;
+    align-items: start;
+    transition: all 0.25s;
+    animation: slideIn 0.3s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .item-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .item-card:hover {
+    border-color: rgba(0,212,255,0.3);
+    transform: translateX(2px);
+  }
+
+  .item-card:hover::before { opacity: 1; }
+
+  .item-card.status-implementing::before { opacity: 1; background: var(--accent3); }
+  .item-card.status-done { opacity: 0.4; }
+  .item-card.status-done::before { opacity: 1; background: var(--muted); }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Score badge */
+  .score-badge {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .score-9, .score-10 { background: rgba(16,185,129,0.15); color: var(--accent3); border: 1px solid rgba(16,185,129,0.3); }
+  .score-7, .score-8 { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.25); }
+  .score-5, .score-6 { background: rgba(245,158,11,0.1); color: var(--warn); border: 1px solid rgba(245,158,11,0.25); }
+  .score-1, .score-2, .score-3, .score-4 { background: rgba(107,107,138,0.1); color: var(--muted); border: 1px solid var(--border); }
+
+  /* Item content */
+  .item-content { min-width: 0; }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .item-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .item-title:hover { color: var(--accent); }
+
+  .cat-tag {
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .item-summary {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+
+  .item-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .meta-item {
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .relevance-bar {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+  }
+
+  .relevance-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+
+  .relevance-dot.filled { background: var(--accent); }
+
+  /* Item actions */
+  .item-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .action-btn.implementing { border-color: var(--accent3); color: var(--accent3); }
+  .action-btn.done { border-color: var(--muted); color: var(--muted); }
+  .action-btn.delete:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Add item modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    width: 100%;
+    max-width: 540px;
+    animation: slideIn 0.25s ease;
+  }
+
+  .modal h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: var(--text);
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    padding: 10px 14px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--accent); }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 80px 24px;
+    color: var(--muted);
+  }
+
+  .empty-state .icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.4;
+  }
+
+  .empty-state h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .empty-state p { font-size: 0.78rem; line-height: 1.6; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    font-size: 0.75rem;
+    padding: 12px 20px;
+    border-radius: 8px;
+    z-index: 200;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Weekly badge */
+  .week-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(124,58,237,0.15);
+    border: 1px solid rgba(124,58,237,0.3);
+    color: #a78bfa;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 640px) {
+    .item-card { grid-template-columns: auto 1fr; }
+    .item-actions { flex-direction: row; grid-column: 1 / -1; }
+    .header-inner { flex-direction: column; align-items: flex-start; }
+    .stats-row { justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo-block">
+        <h1>AI SCOUT</h1>
+        <p>Weekly Intelligence — Jani Lehtonen · Kongsberg Maritime</p>
+      </div>
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-num" id="stat-total">0</div>
+          <div class="stat-label">Total Items</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="stat-new">0</div>
+          <div class="stat-label">This Week</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="stat-implementing">0</div>
+          <div class="stat-label">Implementing</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="filter-group">
+      <input type="text" id="search-input" placeholder="Search items..." oninput="renderItems()">
+      <select id="filter-score" onchange="renderItems()">
+        <option value="">All scores</option>
+        <option value="9">9–10 (Must see)</option>
+        <option value="7">7–8 (High value)</option>
+        <option value="5">5–6 (Moderate)</option>
+        <option value="1">1–4 (Low)</option>
+      </select>
+      <select id="filter-status" onchange="renderItems()">
+        <option value="">All statuses</option>
+        <option value="new">New</option>
+        <option value="implementing">Implementing</option>
+        <option value="done">Done</option>
+      </select>
+      <select id="filter-week" onchange="renderItems()">
+        <option value="">All weeks</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add Item</button>
+    <button class="btn btn-ghost" onclick="clearDone()">Clear Done</button>
+  </div>
+
+  <!-- Category pills -->
+  <div class="category-pills" id="category-pills"></div>
+
+  <!-- Items -->
+  <div class="section-label" id="items-count-label"></div>
+  <div class="items-list" id="items-list"></div>
+</div>
+
+<!-- Add item modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h2>Add Scout Item</h2>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="form-title" placeholder="Feature or article title">
+    </div>
+    <div class="form-group">
+      <label>Summary</label>
+      <textarea id="form-summary" rows="3" placeholder="Brief description and why it matters"></textarea>
+    </div>
+    <div class="form-group">
+      <label>URL / Link</label>
+      <input type="text" id="form-url" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="form-category">
+        <option value="Copilot Features">Copilot Features</option>
+        <option value="AI Agents">AI Agents</option>
+        <option value="Automation">Automation</option>
+        <option value="PM Tools">PM Tools</option>
+        <option value="Prompt Engineering">Prompt Engineering</option>
+        <option value="Industry AI">Industry AI</option>
+        <option value="Learning">Learning</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Relevance Score (1–10)</label>
+      <input type="number" id="form-score" min="1" max="10" value="7">
+    </div>
+    <div class="form-group">
+      <label>Source</label>
+      <input type="text" id="form-source" placeholder="Microsoft Blog, YouTube, LinkedIn...">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Data ────────────────────────────────────────────────────────────────────
+
+const STORAGE_KEY = 'ai_scout_items_v2';
+
+function loadItems() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || getSampleData();
+  } catch { return getSampleData(); }
+}
+
+function saveItems(items) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+
+function getSampleData() {
+  const now = new Date();
+  const weekLabel = getWeekLabel(now);
+  return [
+    {
+      id: uid(), title: "Microsoft 365 Copilot — Agent Builder in Teams",
+      summary: "Build custom AI agents inside Teams without Copilot Studio license. Uses Power Platform connectors. Relevant for automating project status updates.",
+      url: "https://techcommunity.microsoft.com/t5/microsoft-365-copilot/bg-p/Microsoft365CopilotBlog",
+      category: "AI Agents", score: 9, source: "Microsoft Blog",
+      status: "new", week: weekLabel, added: now.toISOString()
+    },
+    {
+      id: uid(), title: "Copilot in Outlook — Meeting Prep Summaries",
+      summary: "Auto-generates a briefing document before any meeting using email thread context. Could save 15–20 min per customer meeting at Kongsberg.",
+      url: "https://support.microsoft.com/en-us/copilot-microsoft-365",
+      category: "Copilot Features", score: 8, source: "Microsoft Support",
+      status: "new", week: weekLabel, added: now.toISOString()
+    },
+    {
+      id: uid(), title: "Power Automate — AI Builder Document Processing",
+      summary: "Extract data from PDFs and contracts automatically using AI Builder. Useful for contract management workflows in project delivery.",
+      url: "https://learn.microsoft.com/en-us/ai-builder/overview",
+      category: "Automation", score: 7, source: "Microsoft Learn",
+      status: "implementing", week: weekLabel, added: now.toISOString()
+    },
+    {
+      id: uid(), title: "Prompt Engineering for Project Managers — Full Guide",
+      summary: "Structured prompting techniques specifically for PM use cases: risk registers, status reports, stakeholder comms. Practical and immediately applicable.",
+      url: "https://www.youtube.com/results?search_query=prompt+engineering+project+manager",
+      category: "Prompt Engineering", score: 8, source: "YouTube",
+      status: "new", week: weekLabel, added: now.toISOString()
+    },
+    {
+      id: uid(), title: "Copilot Studio — Now Available Without Premium License (Rumor)",
+      summary: "Unconfirmed reports of a limited free tier for Copilot Studio in M365 Business Premium. Worth watching — could unblock your automation goals.",
+      url: "https://techcommunity.microsoft.com",
+      category: "Copilot Features", score: 6, source: "Tech Community",
+      status: "new", week: weekLabel, added: now.toISOString()
+    }
+  ];
+}
+
+// ─── State ───────────────────────────────────────────────────────────────────
+
+let items = loadItems();
+let activeCategory = '';
+
+// ─── Utilities ───────────────────────────────────────────────────────────────
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function getWeekLabel(date) {
+  const d = new Date(date);
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `W${week} ${d.getFullYear()}`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+
+function getCategories() {
+  const cats = [...new Set(items.map(i => i.category))].sort();
+  return cats;
+}
+
+function getWeeks() {
+  return [...new Set(items.map(i => i.week))].sort().reverse();
+}
+
+function renderCategoryPills() {
+  const cats = getCategories();
+  const container = document.getElementById('category-pills');
+  container.innerHTML = `
+    <div class="pill ${activeCategory === '' ? 'active' : ''}" onclick="setCategory('')">All</div>
+    ${cats.map(c => `
+      <div class="pill ${activeCategory === c ? 'active' : ''}" onclick="setCategory('${c}')">${c}</div>
+    `).join('')}
+  `;
+}
+
+function renderWeekFilter() {
+  const weeks = getWeeks();
+  const sel = document.getElementById('filter-week');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">All weeks</option>' +
+    weeks.map(w => `<option value="${w}" ${current === w ? 'selected' : ''}>${w}</option>`).join('');
+}
+
+function setCategory(cat) {
+  activeCategory = cat;
+  renderItems();
+}
+
+function getScoreBucket(score) {
+  if (score >= 9) return '9';
+  if (score >= 7) return '7';
+  if (score >= 5) return '5';
+  return '1';
+}
+
+function renderItems() {
+  renderCategoryPills();
+  renderWeekFilter();
+
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const scoreFilter = document.getElementById('filter-score').value;
+  const statusFilter = document.getElementById('filter-status').value;
+  const weekFilter = document.getElementById('filter-week').value;
+
+  let filtered = items.filter(item => {
+    if (activeCategory && item.category !== activeCategory) return false;
+    if (search && !item.title.toLowerCase().includes(search) && !item.summary.toLowerCase().includes(search)) return false;
+    if (scoreFilter && getScoreBucket(item.score) !== scoreFilter) return false;
+    if (statusFilter && item.status !== statusFilter) return false;
+    if (weekFilter && item.week !== weekFilter) return false;
+    return true;
+  });
+
+  // Sort: implementing first, then by score desc
+  filtered.sort((a, b) => {
+    if (a.status === 'implementing' && b.status !== 'implementing') return -1;
+    if (b.status === 'implementing' && a.status !== 'implementing') return 1;
+    if (a.status === 'done' && b.status !== 'done') return 1;
+    if (b.status === 'done' && a.status !== 'done') return -1;
+    return b.score - a.score;
+  });
+
+  // Stats
+  const thisWeek = getWeekLabel(new Date());
+  document.getElementById('stat-total').textContent = items.length;
+  document.getElementById('stat-new').textContent = items.filter(i => i.week === thisWeek).length;
+  document.getElementById('stat-implementing').textContent = items.filter(i => i.status === 'implementing').length;
+
+  const label = document.getElementById('items-count-label');
+  label.textContent = `${filtered.length} item${filtered.length !== 1 ? 's' : ''} shown`;
+
+  const list = document.getElementById('items-list');
+
+  if (filtered.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">◎</div>
+        <h3>No items match</h3>
+        <p>Try adjusting your filters or add a new item manually.</p>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(item => {
+    const scoreBucket = getScoreBucket(item.score);
+    const dots = Array.from({length: 10}, (_, i) =>
+      `<div class="relevance-dot ${i < item.score ? 'filled' : ''}"></div>`
+    ).join('');
+
+    const statusLabel = item.status === 'implementing' ? '● Implementing'
+      : item.status === 'done' ? '✓ Done' : '◌ New';
+
+    return `
+      <div class="item-card status-${item.status}" id="card-${item.id}">
+        <div class="score-badge score-${scoreBucket}">${item.score}</div>
+        <div class="item-content">
+          <div class="item-header">
+            <a class="item-title" href="${item.url || '#'}" target="_blank" rel="noopener">${item.title}</a>
+            <span class="cat-tag">${item.category}</span>
+          </div>
+          <div class="item-summary">${item.summary}</div>
+          <div class="item-meta">
+            <span class="meta-item">
+              <div class="relevance-bar">${dots}</div>
+            </span>
+            <span class="meta-item">📅 ${item.week}</span>
+            ${item.source ? `<span class="meta-item">⌗ ${item.source}</span>` : ''}
+            <span class="meta-item">${statusLabel}</span>
+          </div>
+        </div>
+        <div class="item-actions">
+          <button class="action-btn ${item.status === 'implementing' ? 'implementing' : ''}"
+            onclick="cycleStatus('${item.id}')">
+            ${item.status === 'new' ? 'Start' : item.status === 'implementing' ? 'Implementing' : 'Restart'}
+          </button>
+          <button class="action-btn ${item.status === 'done' ? 'done' : ''}"
+            onclick="markDone('${item.id}')">
+            ${item.status === 'done' ? '✓ Done' : 'Mark Done'}
+          </button>
+          <button class="action-btn delete" onclick="deleteItem('${item.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────────────
+
+function cycleStatus(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item.status = item.status === 'new' ? 'implementing' : 'new';
+  saveItems(items);
+  renderItems();
+}
+
+function markDone(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  item.status = item.status === 'done' ? 'new' : 'done';
+  saveItems(items);
+  renderItems();
+}
+
+function deleteItem(id) {
+  items = items.filter(i => i.id !== id);
+  saveItems(items);
+  renderItems();
+  showToast('Item removed');
+}
+
+function clearDone() {
+  const count = items.filter(i => i.status === 'done').length;
+  if (count === 0) { showToast('No done items to clear'); return; }
+  items = items.filter(i => i.status !== 'done');
+  saveItems(items);
+  renderItems();
+  showToast(`Cleared ${count} done item${count > 1 ? 's' : ''}`);
+}
+
+// ─── Add item modal ───────────────────────────────────────────────────────────
+
+function openAddModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function saveItem() {
+  const title = document.getElementById('form-title').value.trim();
+  if (!title) { showToast('Title is required'); return; }
+
+  const newItem = {
+    id: uid(),
+    title,
+    summary: document.getElementById('form-summary').value.trim(),
+    url: document.getElementById('form-url').value.trim(),
+    category: document.getElementById('form-category').value,
+    score: parseInt(document.getElementById('form-score').value) || 7,
+    source: document.getElementById('form-source').value.trim(),
+    status: 'new',
+    week: getWeekLabel(new Date()),
+    added: new Date().toISOString()
+  };
+
+  // Simple duplicate check
+  const dupe = items.find(i =>
+    i.title.toLowerCase() === newItem.title.toLowerCase()
+  );
+  if (dupe) { showToast('Similar item already exists'); return; }
+
+  items.unshift(newItem);
+  saveItems(items);
+  closeModal();
+  renderItems();
+  showToast('Item added');
+
+  // Reset form
+  ['form-title','form-summary','form-url','form-source'].forEach(id =>
+    document.getElementById(id).value = '');
+  document.getElementById('form-score').value = '7';
+}
+
+// Close modal on overlay click
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ─── URL item injection (for Power Automate webhook) ─────────────────────────
+// Power Automate can append items via URL hash:
+// index.html#item=BASE64_ENCODED_JSON
+function checkUrlItem() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#item=')) return;
+  try {
+    const encoded = hash.slice(6);
+    const decoded = atob(encoded);
+    const newItems = JSON.parse(decoded);
+    const arr = Array.isArray(newItems) ? newItems : [newItems];
+    let added = 0;
+    arr.forEach(item => {
+      const dupe = items.find(i =>
+        i.title.toLowerCase() === (item.title || '').toLowerCase()
+      );
+      if (!dupe) {
+        items.unshift({
+          id: uid(),
+          title: item.title || 'Untitled',
+          summary: item.summary || '',
+          url: item.url || '',
+          category: item.category || 'Other',
+          score: item.score || 7,
+          source: item.source || '',
+          status: 'new',
+          week: getWeekLabel(new Date()),
+          added: new Date().toISOString()
+        });
+        added++;
+      }
+    });
+    if (added > 0) {
+      saveItems(items);
+      showToast(`${added} new item${added > 1 ? 's' : ''} added from weekly scout`);
+      history.replaceState(null, '', window.location.pathname);
+    }
+  } catch(e) {
+    console.error('Failed to parse URL item', e);
+  }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+checkUrlItem();
+renderItems();
+</script>
+</body>
+</html>
