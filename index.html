@@ -1101,9 +1101,66 @@ function checkUrlItem() {
   }
 }
 
+// ─── Gist integration ─────────────────────────────────────────────────────────
+const GIST_ID = '5e2b616f78b40cc5dee20d1f672246fe';
+const GIST_FILE = 'ai-scout-items.json';
+const GIST_URL = `https://gist.githubusercontent.com/kalijanevi-lab/${GIST_ID}/raw/${GIST_FILE}`;
+
+async function loadFromGist() {
+  try {
+    const res = await fetch(GIST_URL + '?t=' + Date.now());
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (Array.isArray(data) && data.length > 0) return data;
+    return null;
+  } catch(e) {
+    console.error('Gist load failed', e);
+    return null;
+  }
+}
+
+async function mergeGistItems(gistItems) {
+  if (!gistItems || gistItems.length === 0) return;
+  let added = 0;
+  gistItems.forEach(item => {
+    const dupe = items.find(i =>
+      i.title.toLowerCase() === (item.title || '').toLowerCase()
+    );
+    if (!dupe) {
+      items.unshift({
+        id: uid(),
+        title: item.title || 'Untitled',
+        summary: item.summary || '',
+        url: item.url || '',
+        category: item.category || 'Other',
+        score: item.score || 7,
+        source: item.source || '',
+        status: 'new',
+        week: item.week || getWeekLabel(new Date()),
+        added: item.added || new Date().toISOString()
+      });
+      added++;
+    }
+  });
+  if (added > 0) {
+    saveItems(items);
+    renderItems();
+    showToast(`${added} new item${added > 1 ? 's' : ''} added from weekly scout`);
+  }
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
-checkUrlItem();
-renderItems();
+async function init() {
+  checkUrlItem();
+  renderItems();
+  // Load new items from Gist and merge
+  const gistItems = await loadFromGist();
+  if (gistItems) {
+    await mergeGistItems(gistItems);
+  }
+}
+
+init();
 </script>
 </body>
 </html>
